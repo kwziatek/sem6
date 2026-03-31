@@ -17,8 +17,9 @@ public class TSPSolution {
             adjacencyList.get(edge.getFirst()).put(edge.get(1), edge.get(2));
             adjacencyList.get(edge.get(1)).put(edge.getFirst(), edge.get(2));
         }
-
-        System.out.println(dfs(1, 0));
+        System.out.println("2-nd approx. path:");
+        int result = dfs(1, 0);
+        System.out.println("length of 2-nd approx.: " + result);
 
     }
 

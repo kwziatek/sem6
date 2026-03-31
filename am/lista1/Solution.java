@@ -68,7 +68,6 @@ public class Solution {
 
     private static List<List<Integer>> findMST(Integer n, List<List<Double>> twoDemPoints) {
         int[][] graph = createMatrix(n, twoDemPoints);
-        // n = 4;
         int[] parent = new int[n+1];
         int[] key = new int[n+1];
         Boolean[] mstSet = new Boolean[n+1];
@@ -130,9 +129,9 @@ public class Solution {
     private static List<List<Integer>> printMST(int n, int[] parent, int[][]graph) {
         int length = 0;
         List<List<Integer>> result = new ArrayList<>();
-        // System.out.println("Edge \t Weight");
+        System.out.println("Edge \t Weight");
         for(int i = 2; i <= n; i++) {
-            // System.out.println(parent[i] + " - " + i + "  " + graph[parent[i]][i]);
+            System.out.println(parent[i] + " - " + i + "  " + graph[parent[i]][i]);
             result.add(List.of(i, parent[i], graph[parent[i]][i]));
             length += graph[parent[i]][i];
         }
