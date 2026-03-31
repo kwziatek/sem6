@@ -1,0 +1,96 @@
+Temat: System paczkomatu do nadawania i odbioru przesyłek
+
+ZADANIE 1 – WYBÓR SYSTEMU I FUNKCJONALNOŚCI
+
+Nazwa systemu:
+System automatycznego paczkomatu do nadawania i odbioru przesyłek
+
+Opis ogólny:
+System paczkomatu umożliwia użytkownikom nadawanie i odbieranie przesyłek za pomocą automatycznych skrytek dostępnych całodobowo. System współpracuje z kurierem oraz serwisantem i obsługuje dodatkowe funkcjonalności, takie jak płatność przy odbiorze.
+
+Funkcjonalności podstawowe:
+- odbiór paczki przez użytkownika (wprowadzenie kodu lub skan QR, otwarcie skrytki, potwierdzenie odbioru)
+- nadanie paczki (wybór skrytki, generowanie kodu nadania, umieszczenie paczki)
+- dostarczenie paczki przez kuriera (identyfikacja, otwieranie skrytek, umieszczanie paczek)
+
+Funkcjonalności wtórne:
+- płatność przy odbiorze (obsługa terminala płatniczego, blokada wydania paczki bez płatności)
+- wysyłanie powiadomień do użytkownika
+- przechowywanie paczek przez określony czas
+- obsługa błędnych prób odbioru
+- obsługa braku dostępnych skrytek
+- autoryzacja użytkownika
+
+Funkcjonalności dla kuriera:
+- dostęp do wielu skrytek
+- odbiór paczek nadanych przez użytkowników
+- raportowanie dostaw
+
+Funkcjonalności serwisowe:
+- tryb serwisowy
+- diagnostyka systemu
+- monitorowanie stanu urządzenia
+- restart systemu
+
+ZADANIE 2 – WYMAGANIA SYSTEMU
+
+CO – Co system robi:
+System umożliwia odbiór i nadawanie przesyłek, przechowuje je w skrytkach, obsługuje płatności przy odbiorze oraz komunikuje się z systemem centralnym. Zarządza dostępem do skrytek i rejestruje operacje.
+
+JAK – Jak system działa:
+
+Wejścia:
+- kod odbioru lub QR
+- dane z aplikacji mobilnej
+- dane wprowadzone przez kuriera
+- sygnały z czujników skrytek
+- dane z terminala płatniczego
+
+Wyjścia:
+- otwieranie i zamykanie skrytek
+- komunikaty na ekranie
+- potwierdzenia operacji
+- komunikacja z systemem centralnym
+
+Zależności:
+- skrytka otwiera się po poprawnym kodzie lub po dokonaniu płatności
+- brak wolnych skrytek uniemożliwia nadanie paczki
+- błędny kod blokuje dostęp
+
+GDZIE – Środowisko działania:
+System działa na zewnątrz budynków w trybie całodobowym.
+
+Ograniczenia:
+- odporność na warunki atmosferyczne
+- zabezpieczenia przed uszkodzeniem i włamaniem
+- konieczność stabilnego zasilania
+- możliwe ograniczenia łączności
+
+Wymagania techniczne:
+- szybki czas reakcji
+- niezawodność
+- czytelny interfejs użytkownika
+
+Z KIM – Użytkownicy systemu:
+
+Użytkownik:
+- odbiera i nadaje paczki
+- może dokonywać płatności
+
+Kurier:
+- dostarcza paczki
+- odbiera paczki nadane
+
+Serwisant:
+- naprawia i diagnozuje system
+- ma dostęp do trybu technicznego
+
+System centralny:
+- zarządza przesyłkami
+- generuje kody odbioru
+- monitoruje urządzenia
+
+Wymagania prawne:
+- ochrona danych osobowych
+- bezpieczeństwo płatności
+- normy bezpieczeństwa urządzeń
