@@ -36,20 +36,22 @@ void loop() {
   while(Serial.available()) {
     char data = Serial.read();
     if(data == ' ') {
-      delay(500);
-    }
-    for(int i = 0; i < t[data].length(); i++) {
-      digitalWrite(LED_BUILTIN, HIGH);
-      if(t[data][i] == '.') {
+      delay(400);
+    } else {
+        for(int i = 0; i < t[data].length(); i++) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        if(t[data][i] == '.') {
+          delay(100);
+        } else if(t[data][i] == '-') {
+          delay(300);
+        } else {
+          Serial.println("unknown char");
+        }
+        digitalWrite(LED_BUILTIN, LOW);
         delay(300);
-      } else if(t[data][i] == '-') {
-        delay(900);
-      } else {
-        Serial.println("unknown char");
       }
-      digitalWrite(LED_BUILTIN, LOW);
-      delay(300);
     }
+    delay(400);
   }
 
 }
