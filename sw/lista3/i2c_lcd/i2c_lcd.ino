@@ -18,6 +18,42 @@ uint8_t arrowRight[8] =
     0b01000
 };
 
+uint8_t arrowUp[8] = 
+{
+  0b00100,
+  0b01110,
+  0b11111,
+  0b00100,
+  0b00100,
+  0b00100,
+  0b00100,
+  0b00000
+};
+
+uint8_t arrowDown[8] = 
+{
+  0b00100,
+  0b00100,
+  0b00100,
+  0b00100,
+  0b11111,
+  0b01110,
+  0b00100,
+  0b00000
+};
+
+uint8_t zero[8] = 
+{
+  0b11111,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b11111,
+  0b00000
+};
+
 int argIn = 0;
 
 void setup() {
@@ -29,13 +65,121 @@ void setup() {
   lcd.init();
   lcd.backlight();
 
-  lcd.createChar(0, arrowRight);
-  lcd.clear();
+  lcd.createChar(1, arrowUp);
+  lcd.createChar(2, arrowDown);
+  lcd.createChar(3, zero);
 
 
   lcd.print("READY!");
   delay(2000);
   lcd.clear();
+}
+
+
+void loop() {
+  //as an input take distance 'x' (can be in cm)
+  // lets set speed - some const
+  // lets calculate the time for which the engine needs to run in order for car to move 'x' cm
+  // in while loop until the calculated time passes calculate the distance that is left and print it
+  // stop the engine
+
+  if (Serial.available() > 0) {
+    // Execute only if data has been sent from the Serial Monitor
+    int cm = Serial.parseInt();
+
+    // Procees only if the input is a valid distance
+    if (cm > 0) {
+      int speed = 150;
+      unsigned long timeToRun = 30UL * cm;
+      
+      // go forward
+      loopGo(speed, cm, timeToRun, true);
+      // go backward
+      loopGo(speed, cm, timeToRun, false);
+    }
+  }
+}
+
+void loopGo(int speed, int cm, int timeToRun, bool direction) {
+  // set up
+  lcd.clear();
+
+  // set 1st line of dispaly unit
+  lcd.setCursor(0,0);
+  lcd.print("Dist left: ");
+  lcd.print(cm);
+  lcd.print(" cm  ");
+  
+  // set direction and 2nd line of display unit
+  if (direction) {
+    w.forward();
+    lcd.setCursor(1,0);
+    lcd.print("R:F");
+    lcd.setCursor(1,7);
+    // print arrow up
+    lcd.write(1); // 1st memory slot (arrowUp)
+    lcd.setCursor(1,13);
+    lcd.print("L:F");
+  } else {
+    w.back();
+    lcd.setCursor(1,0);
+    lcd.print("R:B");
+    lcd.setCursor(1,7);
+    // print arrow down
+    lcd.write(2); // 2nd memory slot (arrowDown)
+    lcd.setCursor(1,13);
+    lcd.print("L:B");
+  }
+
+  delay(500);
+  
+  // set speed -> start movement
+  w.setSpeed(speed);
+  
+  // 1. Mark the starting time
+  unsigned long start_time = millis();
+
+  // 2. Loop until the current time reaches the end time
+  while (millis() - start_time < timeToRun) {
+
+    // calculate how much time has passed
+    unsigned long elapsedTime = millis() - start_time;
+
+    // calculate traveled distance basing on 30ms per 1cm
+    int distTraveled = elapsedTime/30;
+    int distLeft = cm - distTraveled;
+
+    // prevent the screen from displaying negative numbers due to tiny timing overshoot
+    if(distLeft < 0) {
+      distLeft = 0;
+    }
+    lcd.setCursor(0,0);
+    lcd.print("Dist left: ");
+    lcd.print(distLeft);
+    lcd.print(" cm  ");
+
+    // prevent LCD from flickering because of too fast updates
+    delay(50);
+  }
+
+  // stop the engine when time is up
+  w.stop();
+
+  // display left distance after completing movement
+  lcd.setCursor(0,0);
+  lcd.print("Dist left: 0 cm");
+  
+  // update the 2nd row
+  lcd.setCursor(1,0);
+  lcd.print("R:S");
+  lcd.setCursor(1,7);
+  // print zero
+  lcd.write(3); // 3st memory slot (zero)
+  lcd.setCursor(1,13);
+  lcd.print("L:S");
+
+  // wait in place for 3sec
+  delay(3000);
 }
 
 // void loop() {
@@ -59,49 +203,3 @@ void setup() {
 //     delay(20);
 //   }
 // }
-
-void loop() {
-
-  // while(Serial.available()) {
-  //   char c = Serial.read();
-  //   lcd.print(c);
-  //   delay(500);
-  // }
-  // delay(1000);
-  // lcd.clear();
-  lcd.print("16");
-  delay(50);
-  w.goForward(16);
-  delay(1000);
-  lcd.clear();
-  delay(50);
-
-  lcd.print(-16);
-  delay(50);
-  w.goBack(16);
-  delay(1000);
-  lcd.clear();
-  delay(50);
-
-}
-
-void loop() {
-  //as an input take distance 'x' (can be in cm)
-  // lets set speed - some const
-  // lets calculate the time for which the engine needs to run in order for car to move 'x' cm
-  // in while loop until the calculated time passes calculate the distance that is left and print it
-  // stop the engine
-
-  int cm = 50;
-  int speed = 150;
-  int time = 30 * cm;
-  
-  lcd.clear();
-  lcd.print(cm)
-  w.forward();
-  while()
-
-
-
-
-}
