@@ -1,0 +1,972 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{float}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta, fit, backgrounds}
+
+\geometry{margin=2.5cm}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=black,
+  citecolor=black
+}
+
+% Polecenie do oznaczania miejsca na diagram
+\newcommand{\diagrambox}[2][3cm]{%
+  \vspace{0.5cm}
+  \noindent\fbox{%
+    \begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+    \centering
+    \vspace{#1}
+    \textit{[Miejsce na diagram: #2]}
+    \vspace{#1}
+    \end{minipage}%
+  }\par
+  \vspace{0.5cm}
+}
+
+\title{%
+  \textbf{System automatycznego paczkomatu}\\[0.5em]
+  \large Dokumentacja techniczna%
+}
+\author{Karol Wziątek, Kamil Mendyk}
+\date{Marzec 2026}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Opis ogólny systemu}
+
+\subsection{Nazwa systemu}
+System automatycznego paczkomatu do nadawania i odbioru przesyłek.
+
+\subsection{Opis ogólny}
+System paczkomatu umożliwia użytkownikom nadawanie i odbieranie przesyłek
+za pomocą automatycznych skrytek dostępnych całodobowo. System współpracuje
+z kurierem oraz serwisantem i obsługuje dodatkowe funkcjonalności, takie jak
+płatność przy odbiorze.
+
+\subsection{Funkcjonalności}
+
+\subsubsection{Funkcjonalności podstawowe}
+\begin{itemize}
+  \item odbiór paczki przez użytkownika (wprowadzenie kodu lub skan QR, otwarcie skrytki, potwierdzenie odbioru)
+  \item nadanie paczki (wybór skrytki, generowanie kodu nadania, umieszczenie paczki)
+  \item dostarczenie paczki przez kuriera (identyfikacja, otwieranie skrytek, umieszczanie paczek)
+\end{itemize}
+
+\subsubsection{Funkcjonalności wtórne}
+\begin{itemize}
+  \item płatność przy odbiorze (obsługa terminala płatniczego, blokada wydania paczki bez płatności)
+  \item wysyłanie powiadomień do użytkownika
+  \item przechowywanie paczek przez określony czas
+  \item obsługa błędnych prób odbioru
+  \item obsługa braku dostępnych skrytek
+  \item autoryzacja użytkownika i kuriera
+  \item możliwość otwarcia wielu skrytek na raz (dla kuriera)
+  \item raportowanie dostaw
+\end{itemize}
+
+\subsubsection{Funkcjonalności serwisowe}
+\begin{itemize}
+  \item tryb serwisowy
+  \item restart systemu
+  \item monitorowanie stanu urządzenia
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wymagania systemu}
+
+\subsection{Co system robi?}
+System umożliwia odbiór i nadawanie przesyłek, przechowuje je w skrytkach,
+obsługuje płatności przy odbiorze oraz komunikuje się z systemem centralnym.
+Zarządza dostępem do skrytek i rejestruje operacje.
+
+\subsection{Jak system działa?}
+
+\noindent\textbf{Wejścia:}
+\begin{itemize}
+  \item kod odbioru lub QR
+  \item dane z aplikacji mobilnej
+  \item dane wprowadzone przez kuriera
+  \item sygnały z czujników skrytek
+  \item dane z terminala płatniczego
+\end{itemize}
+
+\noindent\textbf{Wyjścia:}
+\begin{itemize}
+  \item otwieranie i zamykanie skrytek
+  \item komunikaty na ekranie
+  \item potwierdzenia operacji
+  \item komunikacja z systemem centralnym
+\end{itemize}
+
+\noindent\textbf{Zależności:}
+\begin{itemize}
+  \item skrytka otwiera się po poprawnym kodzie lub po dokonaniu płatności
+  \item brak wolnych skrytek uniemożliwia nadanie paczki
+  \item błędny kod blokuje dostęp
+\end{itemize}
+
+\subsection{Środowisko działania}
+System jest wbudowany w publicznie dostępne paczkomaty, które mogą być
+stawiane zarówno w budynku, jak i na zewnątrz.
+
+\noindent Ryzyka, które należy wziąć pod uwagę:
+\begin{itemize}
+  \item warunki atmosferyczne np.\ deszcz, śnieg
+  \item próba uszkodzenia lub włamanie
+  \item brak lub słabe połączenie z serwerem -- skutkuje ograniczeniem lub uniemożliwieniem korzystania z systemu
+  \item ataki na serwer
+\end{itemize}
+
+\noindent Wymagania techniczne (wynikające głównie z poprzedniego punktu):
+\begin{itemize}
+  \item wodoodporność urządzenia
+  \item bezpieczeństwo systemu zarówno od strony fizycznej, jak i software'u
+  \item zabezpieczenie połączenia między serwerem oraz paczkomatem, aby zminimalizować podatność na uszkodzenia
+  \item zabezpieczenie serwera przed infiltracją
+\end{itemize}
+
+\subsection{Z kim system wchodzi w interakcję?}
+
+\noindent\textbf{Użytkownik:}
+\begin{itemize}
+  \item odbiera i nadaje paczki
+  \item może dokonywać płatności
+\end{itemize}
+
+\noindent\textbf{Kurier:}
+\begin{itemize}
+  \item dostarcza paczki do paczkomatu adresata
+  \item odbiera nadane paczki
+\end{itemize}
+
+\noindent\textbf{Serwisant:}
+\begin{itemize}
+  \item naprawia i diagnozuje system
+  \item ma dostęp do trybu technicznego
+\end{itemize}
+
+\noindent\textbf{System centralny:} jego zadaniem jest m.in.\ monitorowanie stanu paczko\-matów i generowanie kodów odbioru.
+\begin{itemize}
+  \item paczkomat odbiera od systemu centralnego informacje o paczkach, które znajdują się w paczkomacie
+  \item paczkomat wysyła do systemu centralnego informacje o odbiorach i nadaniach paczek
+\end{itemize}
+
+\subsection{Wymagania prawne}
+\begin{itemize}
+  \item ochrona danych osobowych
+  \item bezpieczeństwo płatności
+  \item normy bezpieczeństwa urządzeń
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    transform shape, 
+    scale=0.8, % Adjust this value (e.g., 0.7 or 0.9) to fit
+    >=Latex,
+    usecase/.style={ellipse, draw, thick, minimum width=3.8cm, minimum height=1.4cm, align=center, fill=blue!5, text width=3.4cm},
+    actor/.style={rectangle, align=center, font=\bfseries},
+    include/.style={dashed, -{Latex}, thick},
+    extend/.style={dashed, -{Latex}, thick},
+    assoc/.style={-, thick}
+]
+
+% ==========================================
+% AKTORZY
+% ==========================================
+\node[actor] (User) at (-3, 0) {Użytkownik};
+\node[actor] (Kurier) at (-3, -9.5) {Kurier};
+\node[actor] (Serwisant) at (-3, -15) {Serwisant};
+
+\node[actor] (SysPlat) at (19, 4) {System\\Płatniczy};
+\node[actor] (SysCentr) at (19, -5) {System\\Centralny};
+
+% ==========================================
+% SYSTEM PACZKOMATU (Ramka)
+% ==========================================
+\begin{scope}[local bounding box=system]
+    
+    % --- GŁÓWNE PRZYPADKI UŻYCIA (Oś X = 8) ---
+    \node[usecase] (PU4) at (8, 4) {PU4: Płatność\\przy odbiorze};
+    \node[usecase] (PU1) at (8, 0) {PU1: Odbiór paczki};
+    \node[usecase] (PU5) at (8, -2.5) {PU5: Wysyłanie\\powiadomień};
+    \node[usecase] (PU2) at (8, -5) {PU2: Nadanie paczki};
+    \node[usecase] (PU3) at (8, -8) {PU3: Dostarczenie\\przez kuriera};
+    
+    % Nowy Przypadek Użycia (PU8)
+    \node[usecase] (PU8) at (8, -11) {PU8: Odbiór paczek\\przez kuriera};
+    
+    \node[usecase] (PU6) at (8, -15) {PU6: Tryb serwisowy};
+    \node[usecase] (PU7) at (14, -15) {PU7: Monitorowanie\\systemu};
+
+    % --- INCLUDES (Oś X = 14) ---
+    \node[usecase, fill=yellow!10] (ObslTerm) at (14, 6) {Obsługa\\terminala};
+    \node[usecase, fill=yellow!10] (AuthUser) at (14, 2) {Autoryzacja\\użytkownika};
+    \node[usecase, fill=yellow!10] (GenKod) at (14, -5) {Generowanie\\kodu nadania};
+    
+    % Współdzielona autoryzacja dla PU3 i PU8
+    \node[usecase, fill=yellow!10] (AuthKurier) at (14, -9.5) {Autoryzacja\\kuriera};
+
+    % --- EXTENDS (Oś X = 2) ---
+    \node[usecase, fill=red!10] (OdmPlat) at (2, 6) {Odmowa\\płatności};
+    \node[usecase, fill=red!10] (BrakSkryt) at (2, -5) {Brak wolnych\\skrytek};
+    
+    % Współdzielone otwarcie wielu skrytek dla PU3 i PU8
+    \node[usecase, fill=red!10] (OtwWielu) at (2, -9.5) {Otwarcie wielu\\skrytek};
+    
+    \node[usecase, fill=red!10] (Restart) at (2, -15) {Restart\\systemu};
+
+\end{scope}
+
+% Rysowanie ramki systemu
+\scoped[on background layer]
+  \node[draw, thick, inner sep=25pt, fit=(system), label=above:\textbf{System Paczkomatu}] {};
+
+% ==========================================
+% POWIĄZANIA AKTORÓW (Asocjacje)
+% ==========================================
+\draw[assoc] (User) -- (PU1);
+\draw[assoc] (User) -- (PU2);
+\draw[assoc] (User) -- (PU4);
+\draw[assoc] (User) to[bend left=10] (PU5);
+
+\draw[assoc] (Kurier) -- (PU3);
+\draw[assoc] (Kurier) -- (PU8);
+
+\draw[assoc] (Serwisant) -- (PU6);
+% Wygięcie strzałki serwisanta tak, aby omijała węzeł PU6
+\draw[assoc] (Serwisant) to[bend right=25] (PU7);
+
+\draw[assoc] (SysPlat) -- (PU4);
+
+\draw[assoc] (SysCentr) to[bend right=15] (PU1);
+\draw[assoc] (SysCentr) to[bend right=5] (PU2);
+\draw[assoc] (SysCentr) to[bend left=5] (PU3);
+\draw[assoc] (SysCentr) -- (PU5);
+\draw[assoc] (SysCentr) to[bend left=15] (PU8);
+% Wygięcie do Monitorowania, aby nie przecinać węzłów Includes
+\draw[assoc] (SysCentr) to[bend left=20] (PU7);
+
+% ==========================================
+% RELACJE INCLUDE
+% ==========================================
+\draw[include] (PU4) -- node[above, sloped, font=\footnotesize] {<<include>>} (ObslTerm);
+\draw[include] (PU1) -- node[above, sloped, font=\footnotesize] {<<include>>} (AuthUser);
+\draw[include] (PU2) -- node[above, sloped, font=\footnotesize] {<<include>>} (GenKod);
+\draw[include] (PU3) -- node[above, sloped, font=\footnotesize] {<<include>>} (AuthKurier);
+\draw[include] (PU8) -- node[below, sloped, font=\footnotesize] {<<include>>} (AuthKurier);
+\draw[include] (PU6) -- node[above, sloped, font=\footnotesize] {<<include>>} (PU7);
+
+% ==========================================
+% RELACJE EXTEND
+% ==========================================
+\draw[extend] (PU4) -- node[right, font=\footnotesize] {<<extend>>} (PU1);
+\draw[extend] (OdmPlat) -- node[above, sloped, font=\footnotesize] {<<extend>>} (PU4);
+\draw[extend] (BrakSkryt) -- node[above, sloped, font=\footnotesize] {<<extend>>} (PU2);
+\draw[extend] (OtwWielu) -- node[above, sloped, font=\footnotesize] {<<extend>>} (PU3);
+\draw[extend] (OtwWielu) -- node[below, sloped, font=\footnotesize] {<<extend>>} (PU8);
+\draw[extend] (Restart) -- node[above, sloped, font=\footnotesize] {<<extend>>} (PU6);
+
+\end{tikzpicture}
+}
+\end{center}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU1 – Odbiór paczki}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Odbiór paczki &
+\textbf{Numer PU:} PU1 &
+\textbf{Priorytet:} wysoki \\
+\hline
+\textbf{Aktor podstawowy:} Użytkownik &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} szczegółowy} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item Użytkownik – chce odebrać paczkę
+\item System centralny – potwierdzenie odbioru
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Użytkownik wprowadza kod lub skanuje QR &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} zewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: Nadanie paczki (PU2), Płatność przy odbiorze (PU5)
+\item Zawieranie: Autoryzacja użytkownika
+\item Rozszerzenie: Płatność przy odbiorze
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item Użytkownik wybiera opcję „Odbiór paczki"
+\item Wprowadza kod lub skanuje QR
+\item System weryfikuje dane
+\item System sprawdza, czy wymagana jest płatność
+\item Skrytka zostaje otwarta
+\item Użytkownik odbiera paczkę
+\item System rejestruje odbiór i zamyka skrytkę
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item 1a. Użytkownik anuluje operację
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Błędny kod → dostęp zablokowany
+\item Brak połączenia z systemem → operacja niemożliwa
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU2 – Nadanie paczki}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Nadanie paczki &
+\textbf{Numer PU:} PU2 &
+\textbf{Priorytet:} wysoki \\
+\hline
+\textbf{Aktor podstawowy:} Użytkownik &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} szczegółowy} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item Użytkownik – chce nadać paczkę
+\item System centralny – rejestracja przesyłki
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Wybór opcji „Nadaj paczkę" &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} zewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: Odbiór przez kuriera (PU3)
+\item Zawieranie: Generowanie kodu nadania
+\item Rozszerzenie: Brak wolnych skrytek
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item Użytkownik wybiera „Nadaj paczkę"
+\item Wprowadza dane lub używa aplikacji
+\item System przydziela skrytkę
+\item Skrytka otwiera się
+\item Użytkownik umieszcza paczkę
+\item System zamyka skrytkę i generuje kod
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item 1a. Użytkownik rezygnuje
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Brak wolnych skrytek → operacja przerwana
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU3 – Dostarczenie paczki przez kuriera}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Dostarczenie paczki &
+\textbf{Numer PU:} PU3 &
+\textbf{Priorytet:} wysoki \\
+\hline
+\textbf{Aktor podstawowy:} Kurier &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} szczegółowy} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item Kurier – chce dostarczyć paczki
+\item System centralny – aktualizacja statusów
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Logowanie kuriera &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} zewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: Odbiór paczki (PU1)
+\item Zawieranie: Autoryzacja kuriera
+\item Rozszerzenie: Otwarcie wielu skrytek
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item Kurier loguje się
+\item System weryfikuje dane
+\item System otwiera odpowiednie skrytki
+\item Kurier umieszcza paczki
+\item System zamyka skrytki
+\item Dane są wysyłane do systemu centralnego
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item Kurier pomija skrytkę
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Błąd autoryzacji → brak dostępu
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU4 – Odbiór paczek przez kuriera}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Odbiór paczek przez kuriera &
+\textbf{Numer PU:} PU4 &
+\textbf{Priorytet:} wysoki \\
+\hline
+\textbf{Aktor podstawowy:} Kurier &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} szczegółowy} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item Kurier – chce odebrać nadane paczki
+\item System centralny – aktualizacja statusów przesyłek
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Logowanie kuriera i wybór opcji odbioru paczek &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} zewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: Nadanie paczki (PU2)
+\item Zawieranie: Autoryzacja kuriera
+\item Rozszerzenie: Otwarcie wielu skrytek
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item Kurier loguje się do systemu
+\item System weryfikuje dane kuriera
+\item System identyfikuje skrytki z paczkami do odbioru
+\item System otwiera odpowiednie skrytki
+\item Kurier odbiera paczki
+\item System zamyka skrytki
+\item System aktualizuje status przesyłek w systemie centralnym
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item Kurier pomija wybrane skrytki
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Brak paczek do odbioru → brak otwierania skrytek
+\item Błąd autoryzacji → brak dostępu
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU5 – Płatność przy odbiorze}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Płatność przy odbiorze &
+\textbf{Numer PU:} PU5 &
+\textbf{Priorytet:} średni \\
+\hline
+\textbf{Aktor podstawowy:} Użytkownik &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} szczegółowy} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item Użytkownik – chce zapłacić i odebrać paczkę
+\item System płatniczy – realizacja transakcji
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Wykrycie konieczności płatności &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} wewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: Odbiór paczki (PU1)
+\item Zawieranie: Obsługa terminala
+\item Rozszerzenie: Odmowa płatności
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item System informuje o konieczności płatności
+\item Użytkownik dokonuje płatności
+\item System potwierdza transakcję
+\item Skrytka zostaje otwarta
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item Anulowanie płatności
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Nieudana płatność → brak wydania paczki
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU6 – Wysyłanie powiadomień}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Wysyłanie powiadomień &
+\textbf{Numer PU:} PU6 &
+\textbf{Priorytet:} średni \\
+\hline
+\textbf{Aktor podstawowy:} System centralny &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} ogólny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item Użytkownik – otrzymuje informacje o statusie paczki
+\item System centralny – informowanie o zdarzeniach
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Zmiana statusu paczki &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} wewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: PU1, PU2, PU3
+\item Zawieranie: —
+\item Rozszerzenie: —
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item System wykrywa zmianę statusu paczki
+\item Generuje powiadomienie
+\item Wysyła powiadomienie do użytkownika
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item Opóźnienie wysłania powiadomienia
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Brak połączenia z serwerem → powiadomienie niewysłane
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU7 – Tryb serwisowy}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Tryb serwisowy &
+\textbf{Numer PU:} PU7 &
+\textbf{Priorytet:} średni \\
+\hline
+\textbf{Aktor podstawowy:} Serwisant &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} ogólny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item Serwisant – diagnoza i naprawa systemu
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Logowanie serwisanta &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} zewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: PU8 (Monitorowanie systemu)
+\item Zawieranie: Monitorowanie systemu
+\item Rozszerzenie: Restart systemu
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item Serwisant loguje się do systemu
+\item System weryfikuje uprawnienia
+\item System udostępnia funkcje serwisowe
+\item Serwisant wykonuje operacje diagnostyczne lub naprawcze
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item Wyjście z trybu serwisowego bez zmian
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Błędne dane logowania → brak dostępu
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PU8 – Monitorowanie systemu}
+
+\begin{tabular}{|p{6cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Nazwa PU:} Monitorowanie systemu &
+\textbf{Numer PU:} PU8 &
+\textbf{Priorytet:} niski \\
+\hline
+\textbf{Aktor podstawowy:} System centralny &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ opisu:} ogólny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Udziałowcy i cele:}
+\begin{itemize}
+\item System centralny – kontrola stanu paczkomatu
+\item Serwisant – dostęp do informacji diagnostycznych
+\end{itemize}
+} \\
+\hline
+\textbf{Wyzwalacz:} Cykliczne sprawdzenie systemu &
+\multicolumn{2}{p{9cm}|}{\textbf{Typ wyzwalacza:} wewnętrzny} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Powiązania:}
+\begin{itemize}
+\item Asocjacja: PU7 (Tryb serwisowy)
+\item Zawieranie: —
+\item Rozszerzenie: —
+\item Generalizacja: —
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Zwykły przepływ zdarzeń:}
+\begin{enumerate}
+\item System zbiera dane z czujników i modułów
+\item Analizuje stan urządzenia
+\item Przesyła raport do systemu centralnego
+\end{enumerate}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy poboczne:}
+\begin{itemize}
+\item Częściowa niedostępność danych
+\end{itemize}
+} \\
+\hline
+\multicolumn{3}{|p{15cm}|}{
+\textbf{Przepływy alternatywne/wyjątkowe:}
+\begin{itemize}
+\item Awaria czujnika → niepełne dane diagnostyczne
+\end{itemize}
+} \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Diagramy}
+
+\subsection{PU1 – Odbiór paczki}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\linewidth]{PU1 - decyzyjny.png}
+    \caption{Diagram decyzyjny}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{PU1 - przepływu.png}
+    \caption{Diagram przepływu}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{PU1 - stanów.png}
+    \caption{Diagram stanów}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{PU1 - sekwencji.png}
+    \caption{Diagram sekwencji}
+\end{figure}
+
+
+\subsection{PU2 – Nadanie paczki}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\linewidth]{PU2 - decyzyjny.png}
+    \caption{Diagram decyzyjny}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{PU2 - przepływu.png}
+    \caption{Diagram przepływu}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{PU2 - stanów.png}
+    \caption{Diagram stanów}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{PU2 - sekwencji.png}
+    \caption{Diagram sekwencji}
+\end{figure}
+
+\subsection{PU3 – Dostarczenie paczki przez kuriera}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\linewidth]{PU3 - decyzyjny.png}
+    \caption{Diagram decyzyjny}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{PU3 - przepływu.png}
+    \caption{Diagram przepływu}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{PU3 - stanów.png}
+    \caption{Diagram stanów}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{PU3 - sekwencji.png}
+    \caption{Diagram sekwencji}
+\end{figure}
+
+\subsection{PU4 – Odbiór paczek przez kuriera}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\linewidth]{PU4 - decyzyjny.png}
+    \caption{Diagram decyzyjny}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{PU4 - przepływu.png}
+    \caption{Diagram przepływu}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{PU4 - stanów.png}
+    \caption{Diagram stanów}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{PU4 - sekwencji.png}
+    \caption{Diagram sekwencji}
+\end{figure}
+
+\subsection{PU5 – Płatność przy odbiorze}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\linewidth]{PU5 - decyzyjny.png}
+    \caption{Diagram decyzyjny}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{PU5 - przepływu.png}
+    \caption{Diagram przepływu}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{PU5 - stanów.png}
+    \caption{Diagram stanów}
+\end{figure}
+Diagram sekwencji dla PU5 jest częscią diagramu sekwencji PU1.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Specyfikacja danych systemowych}
+
+\subsection{Wprowadzenie}
+Niniejszy dokument stanowi rozszerzenie specyfikacji funkcjonalnej systemu automatycznego paczkomatu. Skupia się na definicji danych przetwarzanych przez system, ich reprezentacji fizycznej oraz relacjach zachodzących między nimi w trakcie procesów nadawania i odbioru przesyłek.
+
+\subsection{Klasyfikacja i parametry danych}
+W poniższej tabeli zestawiono kluczowe dane krążące w systemie, uwzględniając ich wymiar fizyczny, jednostki oraz precyzję przetwarzania.
+
+\begin{table}[h!]
+\small
+\centering
+\begin{tabularx}{\textwidth}{l l l l X}
+\toprule
+\textbf{Nazwa danej} & \textbf{Wymiar} & \textbf{Jednostka} & \textbf{Precyzja} & \textbf{Zakres / Format} \\ \midrule
+Kod odbioru / QR  & Alfanumeryczny & -- & 1:1 & 6-12 znaków / String \\
+Kwota płatności  & Waluta & PLN & 0,01 PLN & 0,00 -- 9999,99 \\
+Status skrytki  & Logiczny & -- & 1 bit & \{Otwarta, Zamknięta\} \\
+Zajętość skrytki  & Logiczny & -- & 1 bit & \{Wolna, Zajęta\} \\
+Czas przechowywania  & Czas & h, min & 1 s & Timestamp (Unix) \\
+Temperatura  & Temperatura & $^\circ$C & 0,1 $^\circ$C & -40,0 -- 85,0 $^\circ$C \\
+ID Przesyłki  & Identyfikator & -- & 1:1 & UUID / Kod kreskowy \\
+Uprawnienia  & Poziom dostępu & -- & Dyskretna & \{User, Kurier, Serwis\} \\
+\bottomrule
+\end{tabularx}
+\caption{Zestawienie parametrów danych w systemie paczkomatu.}
+\end{table}
+
+\subsection{Formaty wymiany i struktury danych}
+System wykorzystuje zróżnicowane formaty danych w zależności od warstwy komunikacyjnej:
+
+\begin{itemize}
+    \item \textbf{Warstwa Centralna (Cloud):} Komunikacja z systemem centralnym odbywa się za pomocą formatu \textbf{JSON}. Przesyłane są w nim informacje o statusie paczek oraz raporty monitoringu.
+    \item \textbf{Warstwa Sprzętowa (Hardware):} Sygnały z czujników skrytek (wejścia) oraz sterowanie ryglem (wyjścia) to dane binarne lub ramki protokołów komunikacji szeregowej.
+    \item \textbf{Struktury wewnętrzne (C/C++):}
+    \begin{itemize}
+        \item \texttt{struct Locker}: przechowuje ID skrytki, jej rozmiar, stan rygla oraz obecność paczki.
+        \item \texttt{struct UserSession}: przechowuje dane o aktualnie zalogowanym aktorze (Użytkownik, Kurier lub Serwisant).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Model relacyjny danych}
+W oparciu o analizę przypadków użycia (PU1–PU8), zidentyfikowano następujące relacje między encjami:
+
+\begin{enumerate}
+    \item \textbf{Paczka $\leftrightarrow$ Skrytka:} Relacja 1:1 w danym momencie czasu. Skrytka zostaje przypisana do paczki w momencie nadania (PU2) i zwolniona po odbiorze (PU1).
+    \item \textbf{Kurier $\leftrightarrow$ Skrytki:} Relacja 1:N. Podczas dostarczania (PU3) kurier może otworzyć wiele skrytek jednocześnie.
+    \item \textbf{Paczka $\leftrightarrow$ Płatność:} Relacja 1:1 dla przesyłek pobraniowych. Status płatności (PU5) jest warunkiem koniecznym do wyzwolenia sygnału otwarcia rygla.
+    \item \textbf{System Centralny $\leftrightarrow$ Zdarzenia:} Relacja 1:N. Każda operacja (PU1, PU2, PU3) generuje rekord w logu przesyłany do systemu centralnego w celu aktualizacji statusu.
+\end{enumerate}
+
+\subsection{Wymagania techniczne i bezpieczeństwo}
+Dane wrażliwe, takie jak kody odbioru oraz dane płatnicze, wymagają szyfrowania na poziomie software'u. Dane o stanie systemu (monitoring) są przesyłane cyklicznie w celu wczesnego wykrywania awarii czujników (PU8).
+
+\subsection{Diagram komponentów}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{diagram komponentów.png}
+    \caption{Diagram stanów}
+\end{figure}
+
+\end{document}
