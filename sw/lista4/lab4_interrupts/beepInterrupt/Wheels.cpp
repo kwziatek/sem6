@@ -44,12 +44,18 @@ void Wheels::setSpeed(uint8_t s)
 {
     setSpeedLeft(s);
     setSpeedRight(s);
+    this->currentSpeed = s;
+    if (this->isMovingBack) {
+        long microseconds = map(this->currentSpeed, 0, 255, 1000000, 100000); // is it right?
+    }
 }
 
 void Wheels::attach(int pRF, int pRB, int pRS, int pLF, int pLB, int pLS)
 {
     this->attachRight(pRF, pRB, pRS);
     this->attachLeft(pLF, pLB, pLS);
+
+    pinMode(13, OUTPUT); //Initialize LED pin
 }
 
 void Wheels::forwardLeft() 
@@ -76,12 +82,23 @@ void Wheels::forward()
 {
     this->forwardLeft();
     this->forwardRight();
+
+    this->isMovingBack = false;
+    Timer1.detachInterrupt();
+    digitalWrite(13, LOW);
 }
 
 void Wheels::back()
 {
     this->backLeft();
     this->backRight();
+
+    this->isMovingBack = true;
+
+    long microseconds = map(this->currentSpeed, 0, 255, 1000000, 100000);
+
+    Timer1.initialize(microseconds);
+    Timer1.attachInterrupt(Wheels::blinkLED);
 }
 
 void Wheels::stopLeft()
@@ -98,6 +115,10 @@ void Wheels::stop()
 {
     this->stopLeft();
     this->stopRight();
+
+    this->isMovingBack = false;
+    Timer1.detachInterrupt();
+    digitalWrite(13, LOW);
 }
 
 void Wheels::goForward(int cm)
@@ -116,4 +137,7 @@ void Wheels::goBack(int cm)
     this->stop();
 }
 
-
+void Wheels::blinkLED()
+{
+    digitalWrite(13, !ditialRead(13));
+}

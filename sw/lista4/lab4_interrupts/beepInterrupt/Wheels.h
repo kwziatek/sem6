@@ -14,6 +14,7 @@
 
 
 #include <Arduino.h>
+#include <TimerOne.h>
 
 
 #ifndef Wheels_h
@@ -29,6 +30,9 @@ class Wheels {
          *  pinBack    - wejście "wstecz" L298
          *  pinSpeed   - wejście "enable/PWM" L298
          */
+        void attachEncoders(int pinLeft, int pinRight); // Nowa funkcja
+        void turnLeft(int degrees);                     // Nowa funkcja
+        void turnRight(int degrees);                    // Nowa funkcja
         void attachRight(int pinForward, int pinBack, int pinSpeed);
         void attachLeft(int pinForward, int pinBack, int pinSpeed);
         void attach(int pinRightForward, int pinRightBack, int pinRightSpeed,
@@ -56,9 +60,14 @@ class Wheels {
         void setSpeedRight(uint8_t);
         void setSpeedLeft(uint8_t);
 
+        static void blinkLED();
+
     private: 
         int pinsRight[3];
         int pinsLeft[3];
+
+        uint8_t currentSpeed = 0;
+        bool isMovingBack = false;
 };
 
 
