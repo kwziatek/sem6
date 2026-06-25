@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "Wheels.h"
 #include <PinChangeInterrupt.h> // Dodajemy bibliotekę obsługującą przerwania PCI
+#include "LiquidCrystal_I2C.h" // Dodajemy LCD
 
 #define SET_MOVEMENT(side,f,b) digitalWrite( side[0], f);\
                                digitalWrite( side[1], b)
@@ -127,15 +128,14 @@ void Wheels::goForward(int cm)
     // Pętla działa, dopóki oba koła nie osiągną celu
     while (cntLeft < targetImpulses || cntRight < targetImpulses) {
         
-        // Prosta korekta jazdy na wprost:
         if (cntLeft > cntRight) {
-            this->setSpeedLeft(200);   // Lewe jedzie za szybko - zwalniamy
+            this->setSpeedLeft(170);   // Lewe jedzie za szybko - zwalniamy
             this->setSpeedRight(230);  // Przyspieszamy prawe
         } else if (cntRight > cntLeft) {
-            this->setSpeedLeft(230);
-            this->setSpeedRight(200);
+            this->setSpeedLeft(230);   // Lewe jedzie za wolno - przyspieszamy
+            this->setSpeedRight(170);  // Prawe jedzie za szybko - zwalniamy
         } else {
-            this->setSpeed(200);
+            this->setSpeed(200);       // Jadą równo - wracamy do bazy
         }
 
         // Zatrzymujemy koło, które jako pierwsze przejechało dystans
@@ -197,5 +197,5 @@ void Wheels::turnLeft(int degrees)
 
 void Wheels::blinkLED()
 {
-    digitalWrite(13, !digitalRead(13)); // Poprawiono literówkę
+    digitalWrite(13, !digitalRead(13));
 }

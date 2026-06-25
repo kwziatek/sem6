@@ -1,89 +1,116 @@
 #include <Servo.h>
-#include "LiquidCrystal_I2C.h"
+#include <LiquidCrystal_I2C.h>
 #include "Wheels.h"
-#include "PinChangeInterrupt.h"
 
-byte LCDAddress = 0x27;
+// --- DEFINICJE PINÓW I OBIEKTÓW ---
+#define TRIG A4
+#define ECHO A5
+#define SERVO_PIN 11
 
-LiquidCrystal_I2C lcd(LCDAddress, 16, 2);
-Wheels w;
-
-//piny silników
 #define EnA 5
 #define In1 7
 #define In2 8
 #define In3 2
-#define In4 4
+#define In4 4 
 #define EnB 3
 
-// piny dla sonaru (HC-SR04)
-#define TRIG A4
-#define ECHO A5
-
-// piny dla interrupt
-#define INTINPUT0 A0
-#define INTINPUT1 A1
-
-// pin kontroli serwo (musi być PWM)
-#define SERVO 11
-
+Wheels w;
 Servo serwo;
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// --- ZMIENNE DO ZARZĄDZANIA CZASEM I STANEM ---
+unsigned long lastSonarCheck = 0;
+const int SONAR_INTERVAL = 60; // Sprawdzaj co 60 ms
+const int SAFE_DISTANCE = 20;  // Zatrzymujemy się 20 cm przed ścianą
 
 void setup() {
-  w.attach(In4, In3, EnB, In2, In1, EnA);
-  pinMode(TRIG, OUTPUT);    // TRIG startuje sonar
-  pinMode(ECHO, INPUT);     // ECHO odbiera powracający impuls
-
-  Serial.begin(9600);
-
-  serwo.attach(SERVO);
-
-/* rozejrzyj się w zakresie od 0 stopni (patrz na jedną burtę)
- *  do 180 stopni (patrz na prawą burtę). Wydrukuj na konsoli
- *  kierunek patrzenia i najbliżej widziany obiekt (pojedynczy pomiar)
- */
-  for(byte angle = 0; angle < 180; angle+= 20) {
-    lookAndTellDistance(angle);
-    delay(500);
-  }
-  
-/* patrz przed siebie */
-  serwo.write(90);
-
+    Serial.begin(9600);
+    lcd.init();
+    lcd.backlight();
+    
+    pinMode(TRIG, OUTPUT);
+    pinMode(ECHO, INPUT);
+    serwo.attach(SERVO_PIN);
+    serwo.write(90); // Patrz prosto
+    
+    w.attach(In4, In3, EnB, In2, In1, EnA); // Twoje piny
+    w.attachEncoders(A0, A1);
+    
+    delay(2000); // Daj chwilę na ustabilizowanie przed startem
 }
 
-void loop() 
-{ 
-  w.setSpeed(200);
-  w.forward();
-  delay(1000);
-  w.stop();
-  delay(500);
-  
+void loop() {
+    // 1. Sprawdzanie zegarka (nieblokujące)
+    if (millis() - lastSonarCheck >= SONAR_INTERVAL) {
+        lastSonarCheck = millis();
+        
+        // 2. Pobierz dystans (patrząc prosto)
+        int distance = lookAndTellDistance(90);
+        updateLCD(90, distance); // Zaktualizuj ekran
+        
+        // 3. Logika unikania przeszkód
+        if (distance > 0 && distance < SAFE_DISTANCE) {
+            w.stop();
+            avoidObstacle(); // Wywołanie logiki omijania
+        } else {
+            // Bezpiecznie, jedziemy prosto
+            w.setSpeed(150);
+            w.forward();
+        }
+    }
 }
 
-void lookAndTellDistance(byte angle) {
-  
-  unsigned long tot;      // czas powrotu (time-of-travel)
-  unsigned int distance;
+// Funkcja decyzyjna (wywoływana tylko, gdy napotkamy przeszkodę)
+void avoidObstacle() {
+    lcd.clear();
+    lcd.print("Przeszkoda!");
+    
+    // Rozejrzyj się
+    int distRight = lookAndTellDistance(0);   // Prawo
+    delay(300);                               // Tutaj delay jest OK, bo auto stoi
+    int distLeft = lookAndTellDistance(180);  // Lewo
+    delay(300);
+    serwo.write(90);                          // Wróć na wprost
+    delay(300);
+    
+    // Podejmij decyzję
+    if (distRight > distLeft) {
+        lcd.setCursor(0, 1);
+        lcd.print("Skret w prawo");
+        w.turnRight(90); // Z użyciem Twoich enkoderów!
+    } else {
+        lcd.setCursor(0, 1);
+        lcd.print("Skret w lewo");
+        w.turnLeft(90);
+    }
+    lcd.clear();
+}
 
-  Serial.print("Patrzę w kącie ");
-  Serial.print(angle);
-  serwo.write(angle);
-  
-/* uruchamia sonar (puls 10 ms na `TRIGGER')
- * oczekuje na powrotny sygnał i aktualizuje
- */
-  digitalWrite(TRIG, HIGH);
-  delay(10);
-  digitalWrite(TRIG, LOW);
-  tot = pulseIn(ECHO, HIGH);
+int lookAndTellDistance(byte angle) {
+    static byte lastAngle = 90; // Pamięta poprzedni kąt między wywołaniami
+    
+    serwo.write(angle);
+    
+    // Zrób pauzę na ruch serwa TYLKO, jeśli kąt się zmienił
+    if (angle != lastAngle) {
+        delay(300); 
+        lastAngle = angle;
+    }
+    
+    digitalWrite(TRIG, HIGH);
+    delayMicroseconds(10); // impuls 10 mikrosekund
+    digitalWrite(TRIG, LOW);
+    
+    // Zabezpieczenie przed zawieszeniem: timeout 30000 mikrosekund (ok. 5 metrów)
+    unsigned long tot = pulseIn(ECHO, HIGH, 30000); 
+    
+    if (tot == 0) return 999; // Brak echa (bardzo daleko)
+    return tot / 58;
+}
 
-/* prędkość dźwięku = 340m/s => 1 cm w 29 mikrosekund
- * droga tam i z powrotem, zatem:
- */
-  distance = tot/58;
-
-  Serial.print(": widzę coś w odległości ");
-  Serial.println(distance);
+void updateLCD(int angle, int dist) {
+    lcd.setCursor(0, 0);
+    lcd.print("Kat: "); lcd.print(angle); lcd.print(" st  ");
+    lcd.setCursor(0, 1);
+    lcd.print("Dyst: "); lcd.print(dist); lcd.print(" cm  ");
 }
